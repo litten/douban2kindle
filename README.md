@@ -1,4 +1,5 @@
-rss2kindle
+douban2kindle
 ==========
 
-Send  RSS feeds to your kindle. 将rss订阅发送到你的kindle
+将豆瓣某人的日志整理成电子书，并推送到你的kindle。
+好像很厉害的样子呀…
