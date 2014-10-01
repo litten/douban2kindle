@@ -1,0 +1,21 @@
+{
+  "name": "rss2kindle",
+  "version": "1.0.0",
+  "description": "generate douban notes into mobi books, then push to your kindle",
+  "main": "main.js",
+  "readmeFilename": "README.md",
+  "author": {
+    "name": "litten",
+    "email": "litten225@qq.com",
+    "url": "http://litten.github.io/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/litten/douban2kindle.git"
+  },
+  "dependencies": {
+    "cheerio": "*",
+    "eventproxy": "*",
+    "xml2js": "*"
+  }
+}
