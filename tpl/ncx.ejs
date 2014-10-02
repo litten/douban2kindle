@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"
+	"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="en-US">
+<head>
+<meta name="dtb:uid" content="{{bookId}}"/>
+<meta name="dtb:depth" content="2"/>
+<meta name="dtb:totalPageCount" content="0"/>
+<meta name="dtb:maxPageNumber" content="0"/>
+</head>
+<docTitle><text>{{title}}</text></docTitle>
+<docAuthor><text>{{author}}</text></docAuthor>
+  <navMap>
+    <% for(var i=1; i <= pathArr.length; i++) {%>
+      <navPoint class="<%=itemArr[i-1]%>" id="<%=itemArr[i-1]%>" playOrder="<%=i%>">
+        <navLabel>
+          <text>【<%=i%>】<%=itemArr[i-1]%></text>
+        </navLabel>
+        <content src="<%=pathArr[i-1]%>"/>
+      </navPoint>
+    <% } %>
+  </navMap>
+</ncx>

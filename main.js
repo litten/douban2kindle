@@ -2,6 +2,7 @@ var http = require('http');
 var fs = require('fs');
 var cheerio = require('cheerio');
 var eventproxy = require('eventproxy');
+var ejs = require('ejs');
 var cmd = require('child_process').exec;
 var parseString = require('xml2js').parseString;
 
@@ -42,13 +43,49 @@ var Main = (function(){
 
 	//日期格式化
 	var formatDate = function(date, split){
-		var d = new Date(date);
-		return d.getFullYear()+split+(d.getMonth()+1)+split+d.getDate();
+		split = split || "-";
+		var d = date?new Date(date):new Date();
+		function char2(str){
+			return (str.toString().length == 1)?"0"+str:str;
+		}
+		return d.getFullYear()+split+char2((d.getMonth()+1))+split+char2(d.getDate());
+	}
+
+	//保存图片
+	var getImg = function (src){
+		http.get(src, function (res) {
+	        res.setEncoding('binary');
+	        var imageData ='';
+	        res.on('data',function(data){
+	            imageData += data;
+	        }).on('end',function(){
+	        	var srcSplit = src.split("/");
+	        	var name = srcSplit[srcSplit.length-1];
+	            fs.writeFile(_path+'/img/'+name, imageData, 'binary', function (err) {
+	                if (err) throw err;
+	            });
+	        });
+	    });
+	}
+
+	//替换文章当中的图片
+	var replaceImg = function(content){
+		var $ = cheerio.load(content);
+		var imgArr = $("img");
+		for(var i=0,len=imgArr.length; i<len; i++){
+			var src = imgArr[i]["attribs"]["src"];
+			var srcSplit = src.split("/");
+	        var name = srcSplit[srcSplit.length-1];
+	        var rex = new RegExp(src,"g");
+	        content = content.replace(rex, 'img/'+name);
+			getImg(src);
+		}
+		return content;
 	}
 
 	//生成mobi文件
 	var gen2mobi = function(){
-		cmd('kindlegen.exe ' + _path + '/'+_authorName+'的豆瓣日志.html', function(error, stdout, stderr){
+		cmd('kindlegen.exe ' + _path + '/'+_authorName+'的豆瓣日志.opf', function(error, stdout, stderr){
         	console.log("\n已生成mobi文件！");
 		});
 	}
@@ -66,14 +103,39 @@ var Main = (function(){
 	//将数据生成html文件
 	var gen2html = function(obj){
 		var time = formatDate(obj.published, ".");
-		var content = "<h2>"+formatDate(obj.published, "-")+" "+obj.title+"</h2><code>"+_json.feed.author[0].name+"</code><br><br><div>"+obj.content+"</div>";
 		var title = formatDate(obj.published, "-")+" "+obj.title;
-		fs.writeFile(_path + '/'+title+'.html', _tpl.replace(/{{title}}/g, title).replace(/{{ctn}}/g, content), function(err){
+		var content = "<h2>"+formatDate(obj.published, "-")+" "+obj.title+"</h2><code>"+_json.feed.author[0].name+"</code><br><br><div>"+obj.content+"</div>";
+		content = _tpl.replace(/{{title}}/g, title).replace(/{{ctn}}/g, content);
+		content = replaceImg(content);
+
+		fs.writeFile(_path + '/'+title+'.html', content, function(err){
 	        console.log("《"+obj.title+"》……已完成");
 	        epWriteFile.emit('writeFile', "succ");
 	    });
 	}
 
+	//生成目录
+	var genTOC = function(data){
+		var html = ejs.render(fs.readFileSync('tpl/toc.ejs', 'utf8') , data); 
+		fs.writeFile(_path + '/toc.html', html, function(err){
+
+	    });
+	}
+	//生成opf文件
+	var genOPF = function(data){
+		var html = ejs.render(fs.readFileSync('tpl/opf.ejs', 'utf8') , data); 
+		fs.writeFile(_path + '/'+_authorName+'的豆瓣日志'+'.opf', html, function(err){
+
+	    });
+	}
+
+	//生成ncx文件
+	var genNCX = function(data){
+		var html = ejs.render(fs.readFileSync('tpl/ncx.ejs', 'utf8') , data); 
+		fs.writeFile(_path + '/'+_authorName+'的豆瓣日志'+'.ncx', html, function(err){
+
+	    });
+	}
 	//生成合并文件
 	var genInAll = function(){
 
@@ -82,15 +144,38 @@ var Main = (function(){
 		        console.log('read dir error');  
 		    } else {  
 		    	var wording = "";
-		        files.forEach(function(item) {  
+		    	var title = _authorName+'的豆瓣日志';
+		    	var pathArr = [];
+		    	var itemArr = [];
+
+		        files.forEach(function(item) { 
+		        	if(item.indexOf(".html") < 0) return; 
+		        	pathArr.push(item);
+		        	itemArr.push(item.replace(/.html/g,""));
 		            var tmpPath = _path + '/' + item;  
 		            var data=fs.readFileSync(tmpPath,"utf-8");
 		            var $ = cheerio.load(data);
 		            wording = wording+$('body').html()+"<br><br>";
 		        });  
+		        //生成opf和ncx文件
+		        var param = {
+		        	title: title,
+		        	bookId: title,
+		        	author: _authorName,
+		        	time: formatDate(),
+		        	description: title,
+		        	identifier: title,
+		        	pathArr: pathArr,
+		        	itemArr: itemArr
+		        }
 
-		        var text = _tpl.replace(/{{title}}/g, _authorName+'的豆瓣日志').replace(/{{ctn}}/g, wording);
-		        fs.writeFile(_path + '/'+_authorName+'的豆瓣日志.html', text, function(err){
+		        genOPF(param);
+		        genNCX(param);
+		        genTOC(param);
+
+		        //生成合并后的html
+		        var text = _tpl.replace(/{{title}}/g, title).replace(/{{ctn}}/g, wording);
+		        fs.writeFile(_path + '/'+title+'.html', text, function(err){
 		    		console.log("\n已生成合并日志文件！");
 		    		gen2mobi();
 			    });
@@ -166,6 +251,10 @@ var Main = (function(){
 
 	//初始化
 	var init = function(param){
+		//清除上次log
+		cmd('cls', function(error, stdout, stderr){
+		});
+
 		_opt = {
 		    host: 'api.douban.com',
 		    port: 80,
@@ -175,7 +264,10 @@ var Main = (function(){
 		_path = 'ebook/'+param.people;
 		mkdir("ebook");
 		mkdir(_path);
+		mkdir(_path+"/img");
 		getPage(_opt, true);
+		//_authorName = "嘉倩";
+		//genInAll();
 	}	
 
 	return {
@@ -184,5 +276,5 @@ var Main = (function(){
 })();
 
 Main.init({
-	people: "mejiaqian"
+	people: "zhangjiawei"
 });

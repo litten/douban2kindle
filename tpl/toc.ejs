@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>目录</title>
+		<style>
+			a{
+				text-decoration: none;
+			}
+		</style>
+	</head>
+	<body>
+		<h1><b>目录</b></h1>
+		<br/>
+		<% for(var i=1; i <= pathArr.length; i++) {%>
+		<a href="<%=pathArr[i-1]%>"><b>【<%=i%>】<%=itemArr[i-1]%></b></a><br />
+		<% } %>
+	</body>
+</html>
