@@ -4,21 +4,35 @@
 
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="en-US">
 <head>
-<meta name="dtb:uid" content="{{bookId}}"/>
-<meta name="dtb:depth" content="2"/>
+<meta name="dtb:uid" content="<%=bookId%>"/>
+<meta name="dtb:depth" content="1"/>
 <meta name="dtb:totalPageCount" content="0"/>
 <meta name="dtb:maxPageNumber" content="0"/>
 </head>
-<docTitle><text>{{title}}</text></docTitle>
-<docAuthor><text>{{author}}</text></docAuthor>
+<docTitle><text><%=title%></text></docTitle>
+<docAuthor><text><%=author%></text></docAuthor>
   <navMap>
-    <% for(var i=1; i <= pathArr.length; i++) {%>
-      <navPoint class="<%=itemArr[i-1]%>" id="<%=itemArr[i-1]%>" playOrder="<%=i%>">
-        <navLabel>
-          <text>【<%=i%>】<%=itemArr[i-1]%></text>
-        </navLabel>
-        <content src="<%=pathArr[i-1]%>"/>
-      </navPoint>
-    <% } %>
+  <% for(var year in fileInfo) {%>
+  <% var count = 1;%>
+  <% for(var month in fileInfo[year]) {%>
+    <navPoint class="<%=year%>年<%=month%>" id="<%=year%>年<%=month%>" playOrder="<%=count%>">
+      <% count++; %>
+      <navLabel>
+        <text><%=month%></text>
+      </navLabel>
+      <content src="<%=fileInfo[year][month][0]%>.html"/>
+      <% for(var i=0; i < fileInfo[year][month].length; i++) {%>
+        <% var name = fileInfo[year][month][i].substr(11) %>
+        <navPoint class="<%=name%>" id="<%=name%>" playOrder="<%=count%>">
+        <% count++; %>
+          <navLabel>
+            <text><%=name%></text>
+          </navLabel>
+          <content src="<%=fileInfo[year][month][i]%>.html"/>
+        </navPoint>
+      <% } %>
+    </navPoint>
+  <% } %>
+  <% } %>
   </navMap>
 </ncx>

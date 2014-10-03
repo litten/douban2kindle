@@ -3,17 +3,24 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 		<title>目录</title>
-		<style>
-			a{
-				text-decoration: none;
-			}
-		</style>
+		<link rel="stylesheet" type="text/css" href="css/style.css"/>
 	</head>
 	<body>
 		<h1><b>目录</b></h1>
-		<br/>
-		<% for(var i=1; i <= pathArr.length; i++) {%>
-		<a href="<%=pathArr[i-1]%>"><b>【<%=i%>】<%=itemArr[i-1]%></b></a><br />
+		<h3><b><a href="coverpage.html">封面</a></b></h3>
+		<h3><b><a href="toc.html">主目录</a></b></h3>
+		<% for(var year in fileInfo) {%>
+			<h2><b><%=year%>年</b></h2>
+			<div>
+			<% for(var month in fileInfo[year]) {%>
+				<h3><b><%=month%></b></h3>
+				<div>
+					<ul><% for(var i=0; i < fileInfo[year][month].length; i++) {%>
+					   	<li><a href="<%=fileInfo[year][month][i]%>.html"><%=fileInfo[year][month][i]%></a></li>
+						<% } %></ul>
+				</div>
+			<% } %>
+			</div><br><br>
 		<% } %>
 	</body>
 </html>

@@ -15,6 +15,7 @@ var Main = (function(){
 	//作者
 	var _author = "";
 	var _authorName = "";
+	var _authorFace = "";
 
 	//分页处理
 	var _pageCtrl = {
@@ -52,7 +53,7 @@ var Main = (function(){
 	}
 
 	//保存图片
-	var getImg = function (src){
+	var getImg = function (src, name){
 		http.get(src, function (res) {
 	        res.setEncoding('binary');
 	        var imageData ='';
@@ -60,7 +61,7 @@ var Main = (function(){
 	            imageData += data;
 	        }).on('end',function(){
 	        	var srcSplit = src.split("/");
-	        	var name = srcSplit[srcSplit.length-1];
+	        	name = name || srcSplit[srcSplit.length-1];
 	            fs.writeFile(_path+'/img/'+name, imageData, 'binary', function (err) {
 	                if (err) throw err;
 	            });
@@ -85,6 +86,7 @@ var Main = (function(){
 
 	//生成mobi文件
 	var gen2mobi = function(){
+		console.log('kindlegen.exe ' + _path + '/'+_authorName+'的豆瓣日志.opf');
 		cmd('kindlegen.exe ' + _path + '/'+_authorName+'的豆瓣日志.opf', function(error, stdout, stderr){
         	console.log("\n已生成mobi文件！");
 		});
@@ -104,10 +106,11 @@ var Main = (function(){
 	var gen2html = function(obj){
 		var time = formatDate(obj.published, ".");
 		var title = formatDate(obj.published, "-")+" "+obj.title;
-		var content = "<h2>"+formatDate(obj.published, "-")+" "+obj.title+"</h2><code>"+_json.feed.author[0].name+"</code><br><br><div>"+obj.content+"</div>";
+		var content = "<h2>"+obj.title+"</h2><code>"+_json.feed.author[0].name+" "+formatDate(obj.published, "-")+"</code><br><br><div>"+obj.content+"</div>";
+		//content = content.replace(/<br>+|&nbsp;+/g,"<br>");
 		content = _tpl.replace(/{{title}}/g, title).replace(/{{ctn}}/g, content);
 		content = replaceImg(content);
-
+		
 		fs.writeFile(_path + '/'+title+'.html', content, function(err){
 	        console.log("《"+obj.title+"》……已完成");
 	        epWriteFile.emit('writeFile', "succ");
@@ -136,6 +139,40 @@ var Main = (function(){
 
 	    });
 	}
+
+	//按日期生成文件对象
+	var fileInfo = function(itemArr){
+		var dir = {
+			"01": "一月",
+			"02": "二月",
+			"03": "三月",
+			"04": "四月",
+			"05": "五月",
+			"06": "六月",
+			"07": "七月",
+			"08": "八月",
+			"09": "九月",
+			"10": "十月",
+			"11": "十一月",
+			"12": "十二月",
+		}
+		var obj = {};
+		for(var i=0,len=itemArr.length; i<len; i++){
+			var dateStr = itemArr[i].substr(0,10);
+			var dateStrSplit = dateStr.split("-");
+			var name = itemArr[i].replace(/.html/g,"");
+			var year = dateStrSplit[0];
+			var month = dir[dateStrSplit[1]];
+
+			if(!obj[year]) obj[year] = {};
+			if(!obj[year][month]) obj[year][month] = [];
+
+			obj[year][month].push(name);
+		}
+		
+		console.log(obj);
+		return obj;
+	}
 	//生成合并文件
 	var genInAll = function(){
 
@@ -146,17 +183,17 @@ var Main = (function(){
 		    	var wording = "";
 		    	var title = _authorName+'的豆瓣日志';
 		    	var pathArr = [];
-		    	var itemArr = [];
 
 		        files.forEach(function(item) { 
-		        	if(item.indexOf(".html") < 0) return; 
+		        	if(item.indexOf("coverpage.html") >= 0 || item.indexOf(".html") < 0 || item.indexOf("toc.html") >= 0 || item.indexOf("的豆瓣日志") >= 0) return; 
+
 		        	pathArr.push(item);
-		        	itemArr.push(item.replace(/.html/g,""));
 		            var tmpPath = _path + '/' + item;  
 		            var data=fs.readFileSync(tmpPath,"utf-8");
 		            var $ = cheerio.load(data);
 		            wording = wording+$('body').html()+"<br><br>";
 		        });  
+
 		        //生成opf和ncx文件
 		        var param = {
 		        	title: title,
@@ -166,7 +203,7 @@ var Main = (function(){
 		        	description: title,
 		        	identifier: title,
 		        	pathArr: pathArr,
-		        	itemArr: itemArr
+		        	fileInfo: fileInfo(pathArr)
 		        }
 
 		        genOPF(param);
@@ -212,6 +249,7 @@ var Main = (function(){
 				return;
 			}
 			var buffers = [], size = 0;
+
 			res.on('data', function(buffer) {
 				buffers.push(buffer);
 				size += buffer.length;
@@ -238,6 +276,10 @@ var Main = (function(){
 						_pageCtrl.total = result["feed"]["openSearch:totalResults"][0];
 						_authorName = result["feed"]["author"][0]["name"];
 
+						
+
+						createCover(result);
+
 						epWriteFile.after('writeFile', _pageCtrl.total, function (list) {
 							genInAll();
 						});
@@ -249,6 +291,30 @@ var Main = (function(){
 		});
 	}
 
+	//复制css文件
+	var createCss = function(){
+		var css = ejs.render(fs.readFileSync('tpl/style.css', 'utf8') , {}); 
+		fs.writeFile(_path + '/css/style.css', css, function(err){
+
+	    });
+	}
+
+	//生成封面
+	var createCover = function(result){
+		var faceLink = result["feed"]["author"][0]["link"][2]["$"]["href"];
+		var faceLinkSplit = faceLink.split("/");
+		faceLinkSplit[faceLinkSplit.length-1] = "ul"+faceLinkSplit[faceLinkSplit.length-1].substr(1);
+		_authorFace = faceLinkSplit.join("/");
+
+		var html = ejs.render(fs.readFileSync('tpl/coverpage.ejs', 'utf8') , {
+			author: _authorName
+		}); 
+		fs.writeFile(_path + '/coverpage.html', html, function(err){
+
+	    });
+
+	    getImg(_authorFace, "cover.jpg");
+	}
 	//初始化
 	var init = function(param){
 		//清除上次log
@@ -265,8 +331,13 @@ var Main = (function(){
 		mkdir("ebook");
 		mkdir(_path);
 		mkdir(_path+"/img");
+		mkdir(_path+"/css");
+
+		createCss();
 		getPage(_opt, true);
 		//_authorName = "嘉倩";
+		//_authorName = "张佳玮";
+		//createCover();
 		//genInAll();
 	}	
 
