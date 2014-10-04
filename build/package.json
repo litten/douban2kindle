@@ -1,0 +1,23 @@
+{
+  "name": "douban2kindle",
+  "main": "index.html",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/litten/douban2kindle.git"
+  },
+  "author": "Litten",
+  "email": "litten225@qq.com",
+  "license": "MIT",
+  "webkit": {
+    "plugin": true
+  },
+  "window": {
+    "icon": "icon.png",
+    "toolbar": true,
+    "width": 320,
+    "height": 480,
+    "resizable": false
+  },
+  "node-remote" : "<local>"
+}

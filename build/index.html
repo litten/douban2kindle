@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>douban2kindle - 豆瓣日志电子书生成器</title>
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+</head>
+<body>
+	<input id="file-dialog" class="file-dialog" type="file" nwdirectory />
+	<div class="top">
+		<section id="sec-1">
+			<div class="info">
+				<p class="title">douban2kindle</p>
+				<span class="des">豆瓣日志电子书生成器</span>
+			</div>
+			<div class="about">
+				<a target="_blank" href="https://github.com/litten/douban2kindle">关于项目</a>
+				<a target="_blank" href="http://litten.github.io/">关于“我”</a>
+			</div>
+		</section>
+		<section id="sec-2" class="hide">
+			<div class="tips" id="tips">asdf</div>
+		</section>
+		<section id="sec-3" class="hide">
+			<div class="make-sure">
+				<p>确认生成<span id="who"></span>的豆瓣日志？</p>
+				<button id="start" class="start">yes</button>
+			</div>
+		</section>
+	</div>
+	<div class="bottom">
+		<input type="text" placeholder="请输入TA的豆瓣主页地址" id="ipt" class="ipt" />
+	</div>
+	<script src="main.js"></script>
+	<script src="js/douban2kindle.min.js"></script>
+</body>
+</html>

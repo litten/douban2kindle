@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="<%=bookId%>">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+	<dc:title><%=title%></dc:title>
+	<dc:language>en-us</dc:language>
+  	<meta name="cover" content="My_Cover" />
+	<dc:identifier id="<%=bookId%>" opf:scheme="ISBN"><%=identifier%></dc:identifier>
+	<dc:creator><%=author%></dc:creator>
+	<dc:publisher><%=author%></dc:publisher>
+	<dc:subject><%=author%> 豆瓣</dc:subject>
+	<dc:date><%=time%></dc:date>
+  	<dc:description><%=description%></dc:description>
+  	<dc:coverage></dc:coverage>
+  	<meta name="cover" content="cover-image"/>
+</metadata>
+
+<manifest>
+	<item id="coverpage"  href="coverpage.html"  media-type="application/xhtml+xml"/>
+	<item id="ncx" href="<%=title%>.ncx" media-type="application/x-dtbncx+xml"/>
+	<item id="toc" media-type="application/xhtml+xml" href="toc.html"></item>
+	<% for(var i=1; i <= pathArr.length; i++) {%>
+   	<item id="chap<%=i%>" href="<%=pathArr[i-1]%>" media-type="application/xhtml+xml"/>
+	<% } %>
+	<item id="cover-image" href="img/cover.jpg" media-type="image/jpeg"/>
+</manifest>
+
+<spine toc="ncx">
+	<itemref idref="coverpage" linear="yes"/>
+	<itemref idref="toc" linear="yes"/>
+	<% for(var i=1; i <= pathArr.length; i++) {%>
+   	<itemref idref="chap<%=i%>" linear="yes"/>
+	<% } %>
+</spine>
+	
+<guide>
+	<reference type="cover" title="封面"  href="coverpage.html"/>
+	<reference type="toc" title="目录" href="toc.html"></reference>
+	<% for(var i=1; i <= pathArr.length; i++) {%>
+   	<reference type="text" title="<%=pathArr[i-1]%>"  href="<%=pathArr[i-1]%>"/>
+	<% } %>
+</guide>
+
+</package>
